@@ -1,4 +1,4 @@
-#include <RF24G.h>
+#include <rf24g.h>
 #include <Servo.h>
 
 //Pins
@@ -39,6 +39,15 @@ Servo pololu;
 Servo leftMotor;
 Servo rightMotor;
 
+double packetIn[] = {0, 0, 0, 0, 0, 0, 0};
+  int key = 0;
+  int modeSwitch = 1;
+  int launchMissiles = 2;
+  int leftJoy_Y = 3;
+  int rightJoy_Y = 4;
+  int leftJoy_X = 5;
+  int rightJoy_X = 6;
+
 
 void setup() {
   // put your setup code here, to run once:
@@ -46,19 +55,16 @@ void setup() {
 
   analogReference(DEFAULT);
 
-  //pololu.attach(pololuPin);
+  pololu.attach(pololuPin);
 
-  //leftMotor.attach(leftMotorPin);
-  //rightMotor.attach(rightMotorPin);
-
-  //receiverR.setMinMax(minsMaxsR);
-  receiverL.setMinMax(minsMaxsL);
+  leftMotor.attach(leftMotorPin);
+  rightMotor.attach(rightMotorPin);
 }
 
 
 
 bool isManual(){
-  if(receiverL.getRaw(lCH4key) > middleValue && receiverL.getRaw(lCH1toggleswitch) < middleValue){
+  if(packetIn[key] == 0 && packetIn[modeSwitch] == 0){
     return true;
   }
   else{
@@ -67,7 +73,7 @@ bool isManual(){
 }
 
 bool isAutonomous(){
-  if(receiverL.getRaw(lCH4key) > middleValue && receiverL.getRaw(lCH1toggleswitch) > middleValue){
+  if(packetIn[key] == 1 && packetIn[modeSwitch] == 1){
     return true;
   }
   else{
@@ -95,7 +101,8 @@ void setPercent(Servo motor, double percentage){
 }
 
 void tankSteering(){
-  int leftPwr = receiverL.getMap(1) - 28;
+  setPercent(leftMotor, packetIn[leftJoy_Y]);
+  setPercent(rightMotor, packetIn[rightJoy_Y]);
   
 }
 
@@ -103,32 +110,27 @@ void tankSteering(){
 
 void loop() {
   // put your main code here, to run repeatedly:
-  Serial.println(receiverR.getRaw(2));
-  //Serial.println(receiverR.getMap(2));
   
-  //if(/*isManual()*/true){
+  if(isManual()){
 
-    //activatePololu();
-
-    //setPercent(leftMotor, receiver.getMap(10));
-    //setPercent(rightMotor, receiver.getMap(11));
+    activatePololu();
 
     tankSteering();
 
-  /*}
+  }
   else if(isAutonomous()){
 
     activatePololu();
 
-    /////////////////////////////////////////////
+    //FIXME/////////////////////////////////////////////
     setPercent(leftMotor, 0.5);
     setPercent(rightMotor, -0.5);
-    /////////////////////////////////////////////
+    ////////////////////////////////////////////////////
 
   }
   else{
 
     deactivatePololu();
 
-  }*/
+  }
 }
