@@ -33,7 +33,7 @@ void setup() {
 
 void loop() {
   // put your main code here, to run repeatedly:
-   uint8_t randNumber = random(300);
+  uint8_t sendable = 2040;
   
   int actual;
   
@@ -41,19 +41,22 @@ void loop() {
 
   packet receiverPacketVar;
   // set the destination of the packet to address 1
-  sender.setAddress(1);
+  senderPacketVar.setAddress(1);
   // write the payload to the packet
-  sender.addPayload(&randNumber, sizeof(int));
+  senderPacketVar.addPayload(&sendable, sizeof(int));
   // print out the original payload
   Serial.print("original number:");
-  Serial.println(randNumber);
+  Serial.println(sendable);
   // send the packet, if it is successful try to read back the packet
-  if (send.write(&sender) == true) {
+  if (send.write(&senderPacketVar) == true) {
     // wait until a packet is received
     while (send.available() != true);
-    
-    send.read(&receiver);
+    receiverPacketVar.readPayload(&actual, sizeof(int));
+    // print out the actual value received
+    Serial.print("received number:");
+    send.read(&receiverPacketVar);
     
     Serial.println(actual);
   
+  }
 }
