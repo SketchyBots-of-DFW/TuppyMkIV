@@ -8,18 +8,30 @@ const static uint8_t RADIO_ID = 1;       // Our radio's id.  The transmitter wil
 
 struct RadioPacket // Any packet up to 32 bytes can be sent.
 {
-    uint8_t FromRadioId;
-    uint32_t OnTimeMillis;
-    uint32_t FailedTxCount;
+    int8_t JoystickX;
+    int8_t JoystickY;
+
+    int8_t thrust;
+    int8_t twist;
+
+    bool keyEnabled;
+    bool isAuton;
+
+    uint8_t safetyCounter;
+
+    bool isJudsonSmart;
+
 };
 
-NRFLite _radio;
-RadioPacket _radioData;
+NRFLite radio;
+RadioPacket radioData;
 //End radio Setup
 
 //Pins
   //Analog
     //In
+      int leftAutonMotorPin = A0;
+      int rightAutonMotorPin = A1;
       
     //Out
 
@@ -37,9 +49,6 @@ RadioPacket _radioData;
       int rightMotorPin = 24;
                           
       int pololuPin = 26;
-                          
-
-      int buttonPin = 39;
 
 
 
@@ -55,16 +64,9 @@ Servo pololu;
 Servo leftMotor;
 Servo rightMotor;
 
-//FIXME ////////////////////////////////////////////////////////////
-int packetIn[] = {0,0,0,0,0,0,0,0,0,0,};
-int key = 0;
-int modeSwitch = 1;
-int leftJoy_Y = 2;
-int leftJoy_X = 3;
-int rightJoy_Y = 4;
-int rightJoy_X = 5;
-//FIXME /////////////////////////////////////////////////////////////
-
+bool isFirstSafetyNumber = true;
+uint8_t safetyChecker;
+uint8_t safetyCounter = 0;
 
 
 void setup() {
@@ -79,7 +81,7 @@ void setup() {
     //   _radio.init(RADIO_ID, PIN_RADIO_CE, PIN_RADIO_CSN, NRFLite::BITRATE1MBPS, 75)
     //   _radio.init(RADIO_ID, PIN_RADIO_CE, PIN_RADIO_CSN, NRFLite::BITRATE250KBPS, 0)
     
-    if (!_radio.init(RADIO_ID, CEpin, CSNpin))
+    if (!radio.init(RADIO_ID, CEpin, CSNpin))
     {
         Serial.println("Cannot communicate with radio");
         while (1); // Wait here forever.
@@ -96,7 +98,7 @@ void setup() {
 
 
 bool isManual(){
-  if(packetIn[key] == 0 && packetIn[modeSwitch] == 0){
+  if(radioData.keyEnabled && !radioData.isAuton){
     return true;
   }
   else{
@@ -105,7 +107,7 @@ bool isManual(){
 }
 
 bool isAutonomous(){
-  if(packetIn[key] == 1 && packetIn[modeSwitch] == 1){
+  if(radioData.keyEnabled && radioData.isAuton){
     return true;
   }
   else{
@@ -124,62 +126,79 @@ void deactivatePololu(){
 void setPercent(Servo motor, double percentage){
   if(percentage > 10 || percentage < -10){
     motor.writeMicroseconds((percentage/100 * 400) + 1500);
-    //Serial.println((percentage/100 * 400) + 1500);
   }
   else{
     motor.writeMicroseconds(1500);
-    //Serial.println(1500);
   }
 }
 
 void tankSteering(){
-  setPercent(leftMotor, packetIn[leftJoy_Y]);
-  setPercent(rightMotor, packetIn[rightJoy_Y]);
+  setPercent(leftMotor, radioData.thrust/255);
+  setPercent(rightMotor, radioData.JoystickX);
   
+}
+
+void autonSteering(){
+  setPercent(leftMotor, analogRead(leftAutonMotorPin));
+  setPercent(rightMotor, analogRead(rightAutonMotorPin));
+  
+}
+
+bool isSafe(){
+  if(isFirstSafetyNumber){
+    safetyChecker = radioData.safetyCounter;
+    isFirstSafetyNumber = false;
+  }
+
+  if(safetyChecker = radioData.safetyCounter){
+    safetyCounter++;
+  }
+  else{
+    safetyCounter = 0;
+  }
+
+  if(safetyCounter > 10){
+    return false;
+    deactivatePololu();
+  }
+  else{
+    return true;
+  }
 }
 
 
 
 void loop() {
   // put your main code here, to run repeatedly:
-  while (_radio.hasData())
-    {
-        _radio.readData(&_radioData); // Note how '&' must be placed in front of the variable name.
-
-        String msg = "Radio ";
-        msg += _radioData.FromRadioId;
-        msg += ", ";
-        msg += _radioData.OnTimeMillis;
-        msg += " ms, ";
-        msg += _radioData.FailedTxCount;
-        msg += " Failed TX";
-
-        Serial.println(msg);
-
-        if(isManual()){
-
-          activatePololu();
-
-          tankSteering();
-
-        }
-        else if(isAutonomous()){
-
-          activatePololu();
-
-          //FIXME/////////////////////////////////////////////
-          setPercent(leftMotor, 0.5);
-          setPercent(rightMotor, -0.5);
-          ////////////////////////////////////////////////////
-
-        }
-        else{
-
-          deactivatePololu();
-
-        }
-      }
   
-  
+
+  while (radio.hasData()){
+
+    radio.readData(&radioData); // Note how '&' must be placed in front of the variable name.
+
+    Serial.println(radioData.isJudsonSmart);
+
+    if(isManual() & isSafe()){
+
+      activatePololu();
+
+      tankSteering();
+
+    }
+    else if(isAutonomous() & isSafe()){
+
+      activatePololu();
+
+      autonSteering();
+
+    }
+    else{
+
+      deactivatePololu();
+
+    }
+  }
+
+  deactivatePololu();
   
 }
