@@ -1,10 +1,8 @@
+#include <LCD_I2C.h>
+
 //Pins
   //Analog
     //In
-      int joystickXpin = A0;
-      int joystickYpin = A1;
-      int twist = A2;
-      int thrust = A3;
 
     //Out
       int lcdSDA = A4;
@@ -12,9 +10,6 @@
 
   //Digital
     //In
-      int keyPin = 2;
-      int autonSwitchPin = 3;
-
 
     //Out
       
@@ -22,24 +17,36 @@
 
 
     //Transmitter
-      uint8_t CEpin = 9;
-      uint8_t CSNpin = 10;
-      int MOpin = 11;
-      int MIpin = 12;
-      int SCKpin = 12;
-
-    //Receiver
       int outD0 = 4;
       int outD1 = 5;
       int outD2 = 6;
       int outD3 = 7;
 
+    //Receiver
+      int inD0 = 4;
+      int inD1 = 5;
+      int inD2 = 6;
+      int inD3 = 7;
+
+LCD_I2C lcd(0x27, 16, 2);
+
 void setup() {
   // put your setup code here, to run once:
+  Serial.begin(115200);
 
+  lcd.begin();
+  lcd.backlight();
+}
+
+void updateValues(){
+  if(digitalRead(inD0) == 0){
+    //receiving from boat
+  }
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
+  lcd.clear();
+
 
 }
