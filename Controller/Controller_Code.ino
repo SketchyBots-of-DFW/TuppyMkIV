@@ -36,8 +36,7 @@ RadioPacket radioData;
       int thrust = A3;
 
     //Out
-      int lcdSDA = A4;
-      int lcdSCL = A5;
+
 
   //Digital
     //In
@@ -113,13 +112,6 @@ void loop() {
   }
   else{
     lcd.println("DISABLED");
-  }
-
-  if(digitalRead(autonSwitchPin)){
-    lcd.println("Autonomous Mode");
-  }
-  else{
-    lcd.println("Manual Mode");
   }
 
   radio.send(DESTINATION_RADIO_ID, &radioData, sizeof(radioData)); // Note how '&' must be placed in front of the variable name.
