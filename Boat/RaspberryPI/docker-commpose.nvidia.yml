@@ -1,0 +1,13 @@
+version: "3"
+
+services:
+  dev-workspace:
+    extends:
+      file: docker-compose.yml
+      service: dev-workspace
+    image: sketchybots/roboboat-2024:nvidia
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+    restart: unless-stopped
+    command: tail -f /dev/null
+    runtime: nvidia

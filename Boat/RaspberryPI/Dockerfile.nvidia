@@ -1,0 +1,6 @@
+FROM sketchybots/roboboat-2024:base
+
+# enable nvidia graphics passthrough
+ENV QT_X11_NO_MITSHM 1
+ENV TERM xterm-256color
+ENV LD_LIBRARY_PATH=/usr/lib/wsl/lib
