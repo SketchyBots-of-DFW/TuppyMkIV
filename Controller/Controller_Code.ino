@@ -36,12 +36,14 @@ RadioPacket radioData;
       int thrust = A3;
 
     //Out
-
+      int lcdSDA = A4;
+      int lcdSCL = A5;
 
   //Digital
     //In
-      int keyPin = 4;
-      int autonSwitchPin = 5;
+      int keyPin = 2;
+      int autonSwitchPin = 3;
+
 
     //Out
       
@@ -54,6 +56,12 @@ RadioPacket radioData;
       int MOpin = 11;
       int MIpin = 12;
       int SCKpin = 12;
+
+    //Receiver
+      int inD0 = 4;
+      int inD1 = 5;
+      int inD2 = 6;
+      int inD3 = 7;
 
 uint8_t safetyCounter = 0;
 
@@ -87,20 +95,20 @@ void loop() {
   // put your main code here, to run repeatedly:
   safetyCounter++;
   lcd.clear();
-  // By default, 'send' transmits data and waits for an acknowledgement.  If no acknowledgement is received,
-  // it will try again up to 16 times.  This retry logic is built into the radio hardware itself, so it is very fast.
-  // You can also perform a NO_ACK send that does not request an acknowledgement.  In this situation, the data packet
-  // will only be transmitted a single time and there is no verification of delivery.  So NO_ACK sends are suited for
-  // situations where performance is more important than reliability.
-  //   _radio.send(DESTINATION_RADIO_ID, &_radioData, sizeof(_radioData), NRFLite::REQUIRE_ACK) // THE DEFAULT
-  //   _radio.send(DESTINATION_RADIO_ID, &_radioData, sizeof(_radioData), NRFLite::NO_ACK)
+ 
   radioData.JoystickX = analogRead(joystickXpin);
   radioData.JoystickY = analogRead(joystickYpin);
 
   radioData.twist = analogRead(twist);
   radioData.thrust = analogRead(thrust);
+  
+  if(digitalRead(keyPin) == 1 & (digitalRead(inD1) == 1 & digitalRead(inD0) == 1)){
+    radioData.keyEnabled = true;
+  }
+  else{
+    radioData.keyEnabled = false;
+  }
 
-  radioData.keyEnabled = digitalRead(keyPin);
   radioData.isAuton = digitalRead(autonSwitchPin);
 
   radioData.safetyCounter = safetyCounter;
@@ -114,6 +122,13 @@ void loop() {
     lcd.println("DISABLED");
   }
 
-  radio.send(DESTINATION_RADIO_ID, &radioData, sizeof(radioData)); // Note how '&' must be placed in front of the variable name.
+  if(digitalRead(autonSwitchPin)){
+    lcd.println("Autonomous Mode");
+  }
+  else{
+    lcd.println("Manual Mode");
+  }
+
+  radio.send(DESTINATION_RADIO_ID, &radioData, sizeof(radioData), NRFLite::NO_ACK); // Note how '&' must be placed in front of the variable name.
    
 }
