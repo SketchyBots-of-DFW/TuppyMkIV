@@ -3,24 +3,20 @@
 #include <LCD_I2C.h>
 
 //Radio Setup Begin
-const static uint8_t RADIO_ID = 0;             // Controller radio's id.
-const static uint8_t DESTINATION_RADIO_ID = 1; // Id of the boat radio.
+const static uint8_t RADIO_ID = 0;              // Controller radio's id.
+const static uint8_t DESTINATION_RADIO_ID = 1;  // Id of the boat radio.
 
-struct RadioPacket // Any packet up to 32 bytes can be sent.
+
+struct RadioPacket  // Any packet up to 32 bytes can be sent.
 {
-    int8_t JoystickX;
-    int8_t JoystickY;
+  int8_t JoystickX;
+  int8_t JoystickY;
 
-    int8_t thrust;
-    int8_t twist;
+  int8_t thrust;
+  int8_t twist;
 
-    bool keyEnabled;
-    bool isAuton;
-
-    uint8_t safetyCounter;
-
-    bool isJudsonSmart;
-
+  bool keyEnabled;
+  bool isAuton;
 };
 
 NRFLite radio;
@@ -44,91 +40,94 @@ RadioPacket radioData;
       int keyPin = 2;
       int autonSwitchPin = 3;
 
-
     //Out
-      
 
-
-
-    //Transmitter
-      uint8_t CEpin = 9;
-      uint8_t CSNpin = 10;
-      int MOpin = 11;
-      int MIpin = 12;
-      int SCKpin = 12;
-
-    //Receiver
-      int inD0 = 4;
-      int inD1 = 5;
-      int inD2 = 6;
-      int inD3 = 7;
-
-uint8_t safetyCounter = 0;
+//Transmitter
+  uint8_t CEpin = 9;
+  uint8_t CSNpin = 10;
+  int MOpin = 11;
+  int MIpin = 12;
+  int SCKpin = 12;
 
 LCD_I2C lcd(0x27, 16, 2);
+
+String enabled = " ";
+String manual = " ";
+
+int needToUpdateLCD = 0;
 
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(115200);
-    
-    // By default, 'init' configures the radio to use a 2MBPS bitrate on channel 100 (channels 0-125 are valid).
-    // Both the RX and TX radios must have the same bitrate and channel to communicate with each other.
-    // You can run the 'ChannelScanner' example to help select the best channel for your environment.
-    // You can assign a different bitrate and channel as shown below.
-    //   _radio.init(RADIO_ID, PIN_RADIO_CE, PIN_RADIO_CSN, NRFLite::BITRATE2MBPS, 100) // THE DEFAULT
-    //   _radio.init(RADIO_ID, PIN_RADIO_CE, PIN_RADIO_CSN, NRFLite::BITRATE1MBPS, 75)
-    //   _radio.init(RADIO_ID, PIN_RADIO_CE, PIN_RADIO_CSN, NRFLite::BITRATE250KBPS, 0)
-    
-    if (!radio.init(RADIO_ID, CEpin, CSNpin))
-    {
-        Serial.println("Cannot communicate with radio");
-        while (1); // Wait here forever.
-    }
 
-    lcd.begin();
-    lcd.backlight();
+  // By default, 'init' configures the radio to use a 2MBPS bitrate on channel 100 (channels 0-125 are valid).
+  // Both the RX and TX radios must have the same bitrate and channel to communicate with each other.
+  // You can run the 'ChannelScanner' example to help select the best channel for your environment.
+  // You can assign a different bitrate and channel as shown below.
+  //   _radio.init(RADIO_ID, PIN_RADIO_CE, PIN_RADIO_CSN, NRFLite::BITRATE2MBPS, 100) // THE DEFAULT
+  //   _radio.init(RADIO_ID, PIN_RADIO_CE, PIN_RADIO_CSN, NRFLite::BITRATE1MBPS, 75)
+  //   _radio.init(RADIO_ID, PIN_RADIO_CE, PIN_RADIO_CSN, NRFLite::BITRATE250KBPS, 0)
 
+  if (!radio.init(RADIO_ID, CEpin, CSNpin)) {
+    Serial.println("Cannot communicate with radio");
+    while (1)
+      ;  // Wait here forever.
+  }
+
+  lcd.begin();
+  lcd.backlight();
 }
 
+//Updates the LCD and displaces the state of the robot
+void updateLCD(){
+  if(needToUpdateLCD != 0){
+    lcd.clear();
+    lcd.print(enabled);
+    lcd.setCursor(1,2);
+    lcd.print(manual);
+    lcd.setCursor(1,1);
+    needToUpdateLCD = 0;
+  }
+  else{
+  }
+}
 
 void loop() {
   // put your main code here, to run repeatedly:
-  safetyCounter++;
-  lcd.clear();
- 
-  radioData.JoystickX = analogRead(joystickXpin);
-  radioData.JoystickY = analogRead(joystickYpin);
 
-  radioData.twist = analogRead(twist);
-  radioData.thrust = analogRead(thrust);
-  
-  if(digitalRead(keyPin) == 1 & (digitalRead(inD1) == 1 & digitalRead(inD0) == 1)){
-    radioData.keyEnabled = true;
-  }
-  else{
-    radioData.keyEnabled = false;
-  }
+  radioData.JoystickX = analogRead(joystickXpin);//Reads and applies the joystick values to the data pack
+  radioData.JoystickY = analogRead(joystickYpin);//^
 
+  radioData.twist = analogRead(twist);//^
+  radioData.thrust = analogRead(thrust);//^
+
+  radioData.keyEnabled = digitalRead(keyPin);
   radioData.isAuton = digitalRead(autonSwitchPin);
 
-  radioData.safetyCounter = safetyCounter;
-
-  radioData.isJudsonSmart = true;
-
-  if(digitalRead(keyPin) == 1){
-    lcd.println("ENABLED");
+  if (digitalRead(keyPin) == 1 && enabled.equals("Enabled")) {}//checks if theres a change in the enabled state of the robot
+  else if (digitalRead(keyPin) == 1){
+    needToUpdateLCD++;
+    enabled = "Enabled";
   }
+  else if (digitalRead(keyPin) == 0 && enabled.equals("Disabled")){}
   else{
-    lcd.println("DISABLED");
+    needToUpdateLCD++;
+    enabled = "Disabled";
   }
-
-  if(digitalRead(autonSwitchPin)){
-    lcd.println("Autonomous Mode");
+    
+  if (digitalRead(autonSwitchPin) == 0 && manual.equals("Manual")) {}//Checks if there is a change in the state of the robot
+  else if (digitalRead(autonSwitchPin) == 0){
+    needToUpdateLCD++;
+    manual = "Manual";
   }
+  else if (digitalRead(autonSwitchPin) == 1 && manual.equals("Auton")){}
   else{
-    lcd.println("Manual Mode");
+    needToUpdateLCD++;
+    manual = "Auton";
   }
 
-  radio.send(DESTINATION_RADIO_ID, &radioData, sizeof(radioData), NRFLite::NO_ACK); // Note how '&' must be placed in front of the variable name.
-   
+  updateLCD();
+
+  radio.send(DESTINATION_RADIO_ID, &radioData, sizeof(radioData), NRFLite::NO_ACK);  // Note how '&' must be placed in front of the variable name. Sends data packs
+  
 }

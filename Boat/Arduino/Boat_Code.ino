@@ -6,7 +6,7 @@
 const static uint8_t RADIO_ID = 1;       // Our radio's id.  The transmitter will send to this id.
 
 
-struct RadioPacket // Any packet up to 32 bytes can be sent.
+struct RadioPacket // Any packet up to 32 bytes can be sent. Sets up what we want the radio to transmit everytime
 {
     int8_t JoystickX;
     int8_t JoystickY;
@@ -16,11 +16,6 @@ struct RadioPacket // Any packet up to 32 bytes can be sent.
 
     bool keyEnabled;
     bool isAuton;
-
-    uint8_t safetyCounter;
-
-    bool isJudsonSmart;
-
 };
 
 NRFLite radio;
@@ -55,18 +50,15 @@ RadioPacket radioData;
     //Transceiver
       int CEpin = 49;
       int CSNpin = 53;
+      int SCKpin = 52;
       int MOpin = 50;
       int MIpin = 51;
-      int SCKpin = 52;
+      
 
 Servo pololu;
 
 Servo leftMotor;
 Servo rightMotor;
-
-bool isFirstSafetyNumber = true;
-uint8_t safetyChecker;
-uint8_t safetyCounter = 0;
 
 
 void setup() {
@@ -84,7 +76,10 @@ void setup() {
     if (!radio.init(RADIO_ID, CEpin, CSNpin))
     {
         Serial.println("Cannot communicate with radio");
-        while (1); // Wait here forever.
+        while(!radio.init(RADIO_ID, CEpin, CSNpin)){//Checks if radio works and repeatedly prints it
+          Serial.println("Cannot communicate with radio");
+          delay(100);
+        } // Wait here forever.
     }
 
   analogReference(DEFAULT);
@@ -99,6 +94,7 @@ void setup() {
 
 bool isManual(){
   if(radioData.keyEnabled && !radioData.isAuton){
+    Serial.print("_manual_");
     return true;
   }
   else{
@@ -108,6 +104,7 @@ bool isManual(){
 
 bool isAutonomous(){
   if(radioData.keyEnabled && radioData.isAuton){
+    Serial.print("_auton_");
     return true;
   }
   else{
@@ -116,89 +113,122 @@ bool isAutonomous(){
 }
 
 void activatePololu(){
+  Serial.println("enabled");
   pololu.writeMicroseconds(2000);
 }
 
 void deactivatePololu(){
+  Serial.println("disabled");
   pololu.writeMicroseconds(0);
 }
 
 void setPercent(Servo motor, double percentage){
-  if(percentage > 10 || percentage < -10){
-    motor.writeMicroseconds((percentage/100 * 400) + 1500);
+  if(percentage > 10 || percentage < -10){//Adds deadband so that when at rest it doesn't need to be perfect
+    motor.writeMicroseconds((percentage * 400) + 1500);//Multiplies the given percentage by half of the ESCs PWM input range and adds 1500 so that the percentage corresponds to the correct PWM value
   }
-  else{
+  else{//Sets the motors to stationary
     motor.writeMicroseconds(1500);
   }
 }
 
-void tankSteering(){
+void tankSteering(){//manual controlled tank steering, one axis controls one motor each
   setPercent(leftMotor, radioData.thrust/255);
-  setPercent(rightMotor, radioData.JoystickX);
-  
+  setPercent(rightMotor, radioData.JoystickX/255);
 }
 
-void autonSteering(){
+void autonSteering(){//reads values from the Pi AI and sends it to the motors
   setPercent(leftMotor, analogRead(leftAutonMotorPin));
   setPercent(rightMotor, analogRead(rightAutonMotorPin));
   
 }
 
-bool isSafe(){
-  if(isFirstSafetyNumber){
-    safetyChecker = radioData.safetyCounter;
-    isFirstSafetyNumber = false;
-  }
-
-  if(safetyChecker = radioData.safetyCounter){
-    safetyCounter++;
-  }
-  else{
-    safetyCounter = 0;
-  }
-
-  if(safetyCounter > 10){
-    return false;
-    deactivatePololu();
-  }
-  else{
+bool isSafe(){//checks if the boat is safe to enable
+  if(radioData.keyEnabled == 1){
+    activatePololu();
     return true;
   }
+  else{
+    deactivatePololu();
+    return false;
+  }
+}
+
+void buzzerBeep(int OnOrOff){//beeps a buzzer when the boat is enabled
+  if(OnOrOff == 1){
+    //turns on the buzzer for half of a second
+    if((millis() % 1000) > 500){
+      digitalWrite(LEDbuzzerPin, 1);
+    }
+    else{
+      digitalWrite(LEDbuzzerPin, 0);
+    }
+  }
+  else{
+    digitalWrite(LEDbuzzerPin, 0);
+  }
+}
+
+void ledFlash(int color){//Flashes LEDs to show what state the boat is in
+  switch(color)
+  {
+    case 0://For green
+      halfSecondOn(LEDgreenPin);
+      digitalWrite(LEDyellowPin, 0);
+      digitalWrite(LEDredPin, 0);
+
+    case 1://For yellow
+      digitalWrite(LEDgreenPin, 0);
+      halfSecondOn(LEDyellowPin);
+      digitalWrite(LEDredPin, 0);
+
+    case 2://For red
+      digitalWrite(LEDgreenPin, 0);
+      digitalWrite(LEDyellowPin, 0);
+      halfSecondOn(LEDredPin);
+
+  }
+}
+
+void halfSecondOn(int pin){
+  //Turns the pin to HIGH for half of a second
+  if((millis() % 1000) > 500){//gets milliseconds,divides by 1000 (for one second) and gets the remainder, if the later half of that 1000 activates buzzer
+        digitalWrite(pin, 1);
+      }
+      else{
+        digitalWrite(pin, 0);
+      }
 }
 
 
 
 void loop() {
   // put your main code here, to run repeatedly:
-  
 
   while (radio.hasData()){
 
     radio.readData(&radioData); // Note how '&' must be placed in front of the variable name.
 
-    Serial.println(radioData.isJudsonSmart);
+    if(isManual() & isSafe()){//Sets to manual mode
 
-    if(isManual() & isSafe()){
-
-      activatePololu();
-
+      buzzerBeep(0);
+      ledFlash(1);
       tankSteering();
 
     }
-    else if(isAutonomous() & isSafe()){
+    else if(isAutonomous() & isSafe()){//sets to autonomous mode
 
-      activatePololu();
-
+      buzzerBeep(1);
+      ledFlash(2);
       autonSteering();
 
     }
-    else{
+    else{//Deactivates the ⛴ (boat)
 
+      buzzerBeep(0);
+      ledFlash(0);
       deactivatePololu();
 
     }
   }
-
-  deactivatePololu();
   
 }
