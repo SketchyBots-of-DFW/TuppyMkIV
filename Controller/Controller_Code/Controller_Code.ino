@@ -54,7 +54,7 @@ LCD_I2C lcd(0x27, 16, 2);
 String enabled = " ";
 String manual = " ";
 
-int needToUpdateLCD = 0;
+bool needToUpdateLCD = true;
 
 void setup() {
   // put your setup code here, to run once:
@@ -89,9 +89,7 @@ void updateLCD(){
     lcd.setCursor(1,2);
     lcd.print(manual);
     lcd.setCursor(1,1);
-    needToUpdateLCD = 0;
-  }
-  else{
+    needToUpdateLCD = false;
   }
 }
 
@@ -111,12 +109,12 @@ void loop() {
 
   if (digitalRead(keyPin) == LOW && enabled.equals("Enabled")) {}//checks if theres a change in the enabled state of the robot
   else if (digitalRead(keyPin) == LOW){
-    needToUpdateLCD++;
+    needToUpdateLCD = true;
     enabled = "Enabled";
   }
   else if (digitalRead(keyPin) == HIGH && enabled.equals("Disabled")){}
   else{
-    needToUpdateLCD++;
+    needToUpdateLCD = true;
     enabled = "Disabled";
   }
     
