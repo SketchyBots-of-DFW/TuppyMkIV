@@ -129,7 +129,8 @@ void deactivatePololu(){
 
 void setPercent(Servo motor, double percentage){
   if(percentage > 10 || percentage < -10){//Adds deadband so that when at rest it doesn't need to be perfect
-    motor.writeMicroseconds((percentage * 400) + 1500);//Multiplies the given percentage by half of the ESCs PWM input range and adds 1500 so that the percentage corresponds to the correct PWM value
+    motor.writeMicroseconds((percentage * 400) + 1500);//Multiplies the given percentage by half of the ESCs PWM input range and adds 1500 
+                                                       //so that the percentage corresponds to the correct PWM value
   }
   else{//Sets the motors to stationary
     motor.writeMicroseconds(1500);
@@ -148,7 +149,7 @@ void autonSteering(){//reads values from the Pi AI and sends it to the motors
 }
 
 bool isSafe(){//checks if the boat is safe to enable
-  if(radioData.keyEnabled == 1){
+  if(radioData.keyEnabled == 1 && radio.hasData()){
     activatePololu();
     return true;
   }
@@ -162,14 +163,14 @@ void buzzerBeep(int OnOrOff){//beeps a buzzer when the boat is enabled
   if(OnOrOff == 1){
     //turns on the buzzer for half of a second
     if((millis() % 1000) > 500){
-      digitalWrite(LEDbuzzerPin, 1);
+      digitalWrite(LEDbuzzerPin, HIGH);
     }
     else{
-      digitalWrite(LEDbuzzerPin, 0);
+      digitalWrite(LEDbuzzerPin, LOW);
     }
   }
   else{
-    digitalWrite(LEDbuzzerPin, 0);
+    digitalWrite(LEDbuzzerPin, LOW);
   }
 }
 
@@ -234,5 +235,4 @@ void loop() {
 
     }
   }
-  ledFlash(0);
 }
