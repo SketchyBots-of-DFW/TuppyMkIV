@@ -148,7 +148,7 @@ void autonSteering(){//reads values from the Pi AI and sends it to the motors
   
 }
 
-bool isSafe(){//checks if the boat is safe to enable
+bool isKeyOn(){//checks if the boat is safe to enable
   if(radioData.keyEnabled == 1 && radio.hasData()){
     activatePololu();
     return true;
@@ -174,7 +174,7 @@ void buzzerBeep(int OnOrOff){//beeps a buzzer when the boat is enabled
   }
 }
 
-void ledFlash(int color){//Flashes LEDs to show what state the boat is in
+void LEDactivation(int color){//Flashes LEDs to show what state the boat is in
   switch(color)
   {
     case 0://For green
@@ -182,22 +182,34 @@ void ledFlash(int color){//Flashes LEDs to show what state the boat is in
       digitalWrite(LEDyellowPin, 0);
       digitalWrite(LEDredPin, 0);
 
+      buzzerBeep(0);
+
+      break;
+
     case 1://For yellow
       digitalWrite(LEDgreenPin, 0);
       halfSecondOn(LEDyellowPin);
       digitalWrite(LEDredPin, 0);
+
+      buzzerBeep(0);
+
+      break;
 
     case 2://For red
       digitalWrite(LEDgreenPin, LOW);
       digitalWrite(LEDyellowPin, LOW);
       halfSecondOn(LEDredPin);
 
+      buzzerBeep(1);
+
+      break;
+
   }
 }
 
 void halfSecondOn(int pin){
   //Turns the pin to HIGH for half of a second
-  if((millis() % 1000) > 500){//gets milliseconds,divides by 1000 (for one second) and gets the remainder, if the later half of that 1000 activates buzzer
+  if((millis() % 1000) > 500){//gets milliseconds,divides by 1000 (for one second) and gets the remainder, if the later half of that 1000 activates LED/Buzzer
         digitalWrite(pin, HIGH);
       }
       else{
@@ -213,24 +225,21 @@ void loop() {
 
     radio.readData(&radioData); // Note how '&' must be placed in front of the variable name.
 
-    if(isManual() & isSafe()){//Sets to manual mode
+    if(isManual() & isKeyOn()){//Sets to manual mode
 
-      buzzerBeep(0);
-      ledFlash(1);
+      LEDactivation(1);
       tankSteering();
 
     }
-    else if(isAutonomous() & isSafe()){//sets to autonomous mode
+    else if(isAutonomous() & isKeyOn()){//sets to autonomous mode
 
-      buzzerBeep(1);
-      ledFlash(2);
+      LEDactivation(2);
       autonSteering();
 
     }
     else{//Deactivates the ⛴ (boat)
 
-      buzzerBeep(0);
-      ledFlash(0);
+      LEDactivation(0);
       deactivatePololu();
 
     }
