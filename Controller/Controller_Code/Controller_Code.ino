@@ -60,6 +60,9 @@ void setup() {
   // put your setup code here, to run once:
   Serial.begin(115200);
 
+  pinMode(keyPin, INPUT_PULLUP);
+  pinMode(autonSwitchPin, INPUT_PULLUP);
+
   // By default, 'init' configures the radio to use a 2MBPS bitrate on channel 100 (channels 0-125 are valid).
   // Both the RX and TX radios must have the same bitrate and channel to communicate with each other.
   // You can run the 'ChannelScanner' example to help select the best channel for your environment.
@@ -101,26 +104,28 @@ void loop() {
   radioData.twist = analogRead(twist);//^
   radioData.thrust = analogRead(thrust);//^
 
-  radioData.keyEnabled = digitalRead(keyPin);
-  radioData.isAuton = digitalRead(autonSwitchPin);
+  radioData.keyEnabled = !digitalRead(keyPin);
+  Serial.print(!digitalRead(keyPin));
+  radioData.isAuton = !digitalRead(autonSwitchPin);
+  Serial.println(!digitalRead(autonSwitchPin));
 
-  if (digitalRead(keyPin) == 1 && enabled.equals("Enabled")) {}//checks if theres a change in the enabled state of the robot
-  else if (digitalRead(keyPin) == 1){
+  if (digitalRead(keyPin) == LOW && enabled.equals("Enabled")) {}//checks if theres a change in the enabled state of the robot
+  else if (digitalRead(keyPin) == LOW){
     needToUpdateLCD++;
     enabled = "Enabled";
   }
-  else if (digitalRead(keyPin) == 0 && enabled.equals("Disabled")){}
+  else if (digitalRead(keyPin) == HIGH && enabled.equals("Disabled")){}
   else{
     needToUpdateLCD++;
     enabled = "Disabled";
   }
     
-  if (digitalRead(autonSwitchPin) == 0 && manual.equals("Manual")) {}//Checks if there is a change in the state of the robot
+  if (digitalRead(autonSwitchPin) == LOW && manual.equals("Manual")) {}//Checks if there is a change in the state of the robot
   else if (digitalRead(autonSwitchPin) == 0){
     needToUpdateLCD++;
     manual = "Manual";
   }
-  else if (digitalRead(autonSwitchPin) == 1 && manual.equals("Auton")){}
+  else if (digitalRead(autonSwitchPin) == HIGH && manual.equals("Auton")){}
   else{
     needToUpdateLCD++;
     manual = "Auton";

@@ -84,6 +84,11 @@ void setup() {
 
   analogReference(DEFAULT);
 
+  pinMode(LEDbuzzerPin, OUTPUT);
+  pinMode(LEDgreenPin, OUTPUT);
+  pinMode(LEDyellowPin, OUTPUT);
+  pinMode(LEDredPin, OUTPUT);
+
   pololu.attach(pololuPin);
 
   leftMotor.attach(leftMotorPin);
@@ -172,7 +177,7 @@ void ledFlash(int color){//Flashes LEDs to show what state the boat is in
   switch(color)
   {
     case 0://For green
-      halfSecondOn(LEDgreenPin);
+      digitalWrite(LEDgreenPin, HIGH);
       digitalWrite(LEDyellowPin, 0);
       digitalWrite(LEDredPin, 0);
 
@@ -182,8 +187,8 @@ void ledFlash(int color){//Flashes LEDs to show what state the boat is in
       digitalWrite(LEDredPin, 0);
 
     case 2://For red
-      digitalWrite(LEDgreenPin, 0);
-      digitalWrite(LEDyellowPin, 0);
+      digitalWrite(LEDgreenPin, LOW);
+      digitalWrite(LEDyellowPin, LOW);
       halfSecondOn(LEDredPin);
 
   }
@@ -192,10 +197,10 @@ void ledFlash(int color){//Flashes LEDs to show what state the boat is in
 void halfSecondOn(int pin){
   //Turns the pin to HIGH for half of a second
   if((millis() % 1000) > 500){//gets milliseconds,divides by 1000 (for one second) and gets the remainder, if the later half of that 1000 activates buzzer
-        digitalWrite(pin, 1);
+        digitalWrite(pin, HIGH);
       }
       else{
-        digitalWrite(pin, 0);
+        digitalWrite(pin, LOW);
       }
 }
 
@@ -203,7 +208,6 @@ void halfSecondOn(int pin){
 
 void loop() {
   // put your main code here, to run repeatedly:
-
   while (radio.hasData()){
 
     radio.readData(&radioData); // Note how '&' must be placed in front of the variable name.
@@ -230,5 +234,5 @@ void loop() {
 
     }
   }
-  
+  ledFlash(0);
 }
