@@ -209,7 +209,7 @@ void halfSecondOn(int pin){
 
 void loop() {
   // put your main code here, to run repeatedly:
-  while (radio.hasData()){
+  while (radio.hasData()){//SAFETY: Only runs code when radio is connected
 
     radio.readData(&radioData); // Note how '&' must be placed in front of the variable name.
 
