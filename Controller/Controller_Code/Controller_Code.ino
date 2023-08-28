@@ -102,31 +102,25 @@ void loop() {
   radioData.twist = analogRead(twist);//^
   radioData.thrust = analogRead(thrust);//^
 
-  radioData.keyEnabled = !digitalRead(keyPin);
-  Serial.print(!digitalRead(keyPin));
-  radioData.isAuton = !digitalRead(autonSwitchPin);
-  Serial.println(!digitalRead(autonSwitchPin));
+  radioData.keyEnabled = !digitalRead(keyPin);//Reads and applies the key and switch values to the data pack
+  radioData.isAuton = digitalRead(autonSwitchPin);
 
-  if (digitalRead(keyPin) == LOW && enabled.equals("Enabled")) {}//checks if theres a change in the enabled state of the robot
-  else if (digitalRead(keyPin) == LOW){
+  //checks if theres a change in the enabled state of the robot
+  if (digitalRead(keyPin) == LOW && !enabled.equals("Enabled")){
     needToUpdateLCD = true;
     enabled = "Enabled";
-  }
-  else if (digitalRead(keyPin) == HIGH && enabled.equals("Disabled")){}
-  else{
+  } else if (digitalRead(keyPin) == HIGH && !enabled.equals("Disabled")){
     needToUpdateLCD = true;
     enabled = "Disabled";
   }
     
-  if (digitalRead(autonSwitchPin) == LOW && manual.equals("Manual")) {}//Checks if there is a change in the state of the robot
-  else if (digitalRead(autonSwitchPin) == 0){
-    needToUpdateLCD++;
-    manual = "Manual";
-  }
-  else if (digitalRead(autonSwitchPin) == HIGH && manual.equals("Auton")){}
-  else{
-    needToUpdateLCD++;
+  //checks if theres a change in the manual/auton state of the robot
+  if (digitalRead(autonSwitchPin) == LOW && !manual.equals("Auton")){
+    needToUpdateLCD = true;
     manual = "Auton";
+  } else if (digitalRead(autonSwitchPin) == HIGH && !manual.equals("Manual")){
+    needToUpdateLCD = true;
+    manual = "Manual";
   }
 
   updateLCD();
