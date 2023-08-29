@@ -115,10 +115,10 @@ void loop() {
   }
     
   //checks if theres a change in the manual/auton state of the robot
-  if (digitalRead(autonSwitchPin) == LOW && !manual.equals("Auton")){
+  if (digitalRead(autonSwitchPin) == HIGH && !manual.equals("Auton")){
     needToUpdateLCD = true;
     manual = "Auton";
-  } else if (digitalRead(autonSwitchPin) == HIGH && !manual.equals("Manual")){
+  } else if (digitalRead(autonSwitchPin) == LOW && !manual.equals("Manual")){
     needToUpdateLCD = true;
     manual = "Manual";
   }
