@@ -86,9 +86,9 @@ void updateLCD(){
   if(needToUpdateLCD != 0){
     lcd.clear();
     lcd.print(enabled);
-    lcd.setCursor(1,2);
+    lcd.setCursor(0,2);
     lcd.print(manual);
-    lcd.setCursor(1,1);
+    lcd.setCursor(0,1);
     needToUpdateLCD = false;
   }
 }
