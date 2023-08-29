@@ -186,11 +186,11 @@ void LEDactivation(int color){//Flashes LEDs to show what state the boat is in
 void halfSecondOn(int pin){
   //Turns the pin to HIGH for half of a second
   if((millis() % 1000) > 500){//gets milliseconds,gets the remainder of dividing by 1000(for one second), if the upper half of 1000 activates LED/Buzzer
-        digitalWrite(pin, HIGH);
-      }
-      else{
-        digitalWrite(pin, LOW);
-      }
+    digitalWrite(pin, HIGH);
+  }
+  else{
+    digitalWrite(pin, LOW);
+  }
 }
 
 void loop() {
