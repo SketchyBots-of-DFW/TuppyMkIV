@@ -5,7 +5,6 @@
 //begin Radio Setup
 const static uint8_t RADIO_ID = 1;       // Our radio's id.  The transmitter will send to this id.
 
-
 struct RadioPacket // Any packet up to 32 bytes can be sent. Sets up what we want the radio to transmit everytime
 {
     int8_t JoystickX;
@@ -45,8 +44,6 @@ RadioPacket radioData;
                           
       int pololuPin = 26;
 
-
-
     //Transceiver
       int CEpin = 49;
       int CSNpin = 53;
@@ -54,12 +51,10 @@ RadioPacket radioData;
       int MOpin = 50;
       int MIpin = 51;
       
-
 Servo pololu;
 
 Servo leftMotor;
 Servo rightMotor;
-
 
 void setup() {
   // put your setup code here, to run once:
@@ -94,8 +89,6 @@ void setup() {
   leftMotor.attach(leftMotorPin);
   rightMotor.attach(rightMotorPin);
 }
-
-
 
 bool isManual(){
   if(radioData.keyEnabled && !radioData.isAuton){
@@ -192,15 +185,13 @@ void LEDactivation(int color){//Flashes LEDs to show what state the boat is in
 
 void halfSecondOn(int pin){
   //Turns the pin to HIGH for half of a second
-  if((millis() % 1000) > 500){//gets milliseconds,divides by 1000 (for one second) and gets the remainder, if the later half of that 1000 activates LED/Buzzer
+  if((millis() % 1000) > 500){//gets milliseconds,gets the remainder of dividing by 1000(for one second), if the upper half of 1000 activates LED/Buzzer
         digitalWrite(pin, HIGH);
       }
       else{
         digitalWrite(pin, LOW);
       }
 }
-
-
 
 void loop() {
   // put your main code here, to run repeatedly:

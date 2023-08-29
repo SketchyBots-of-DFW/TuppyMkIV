@@ -98,27 +98,28 @@ void loop() {
 
   radioData.JoystickX = analogRead(joystickXpin);//Reads and applies the joystick values to the data pack
   radioData.JoystickY = analogRead(joystickYpin);//^
-
-  radioData.twist = analogRead(twist);//^
-  radioData.thrust = analogRead(thrust);//^
+  radioData.twist = analogRead(twist);           //^
+  radioData.thrust = analogRead(thrust);         //^
 
   radioData.keyEnabled = !digitalRead(keyPin);//Reads and applies the key and switch values to the data pack
   radioData.isAuton = digitalRead(autonSwitchPin);
 
   //checks if theres a change in the enabled state of the robot
-  if (digitalRead(keyPin) == LOW && !enabled.equals("Enabled")){
+  if (radioData.keyEnabled && !enabled.equals("Enabled")){
     needToUpdateLCD = true;
     enabled = "Enabled";
-  } else if (digitalRead(keyPin) == HIGH && !enabled.equals("Disabled")){
+  }
+  else if (!radioData.keyEnabled && !enabled.equals("Disabled")){
     needToUpdateLCD = true;
     enabled = "Disabled";
   }
     
   //checks if theres a change in the manual/auton state of the robot
-  if (digitalRead(autonSwitchPin) == HIGH && !manual.equals("Auton")){
+  if (radioData.isAuton && !manual.equals("Auton")){
     needToUpdateLCD = true;
     manual = "Auton";
-  } else if (digitalRead(autonSwitchPin) == LOW && !manual.equals("Manual")){
+  }
+  else if (!radioData.isAuton && !manual.equals("Manual")){
     needToUpdateLCD = true;
     manual = "Manual";
   }
