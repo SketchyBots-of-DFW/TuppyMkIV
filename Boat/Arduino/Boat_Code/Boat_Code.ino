@@ -158,7 +158,7 @@ bool isKeyOn(){//checks if the boat is safe to enable
   }
 }
 
-void LEDactivation(int color){//Flashes LEDs to show what state the boat is in
+void LEDactivation(int color){//Flashes LEDs/buzzer to show what state the boat is in
 
   switch(color)
   {
@@ -233,7 +233,7 @@ void loop() {
     }
   }
 
-  if(!radio.hasData()){
+  if(!radio.hasData() && !isKeyOn()){
     deactivatePololu();
   }
 }
