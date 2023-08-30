@@ -56,6 +56,8 @@ Servo pololu;
 Servo leftMotor;
 Servo rightMotor;
 
+int connectivityTimer;
+
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(115200);
@@ -146,11 +148,18 @@ bool isKeyOn(){//checks if the boat is safe to enable
     return true;
   }
   else{
-    return false;
+    if(connectivityTimer < 1000000){
+      connectivityTimer++;
+      return true;
+    }
+    else{
+      return false;
+    }
   }
 }
 
 void LEDactivation(int color){//Flashes LEDs to show what state the boat is in
+
   switch(color)
   {
     case 0://For green
@@ -222,5 +231,9 @@ void loop() {
       LEDactivation(0);
 
     }
+  }
+
+  if(!radio.hasData()){
+    deactivatePololu();
   }
 }

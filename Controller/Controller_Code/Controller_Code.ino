@@ -126,6 +126,9 @@ void loop() {
 
   updateLCD();
 
+  Serial.print(enabled);
+  Serial.println(manual);
+
   radio.send(DESTINATION_RADIO_ID, &radioData, sizeof(radioData), NRFLite::NO_ACK);  // Note how '&' must be placed in front of the variable name. Sends data packs
   
 }
