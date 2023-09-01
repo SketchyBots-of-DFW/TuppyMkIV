@@ -59,6 +59,8 @@ Servo rightMotor;
 int connectivityTimer;
 
 void setup() {
+  digitalWrite(LEDgreenPin, HIGH);
+  digitalWrite(LEDbuzzerPin, LOW);
   // put your setup code here, to run once:
   Serial.begin(115200);
 
@@ -75,7 +77,7 @@ void setup() {
         Serial.println("Cannot communicate with radio");
         while(!radio.init(RADIO_ID, CEpin, CSNpin)){//Checks if radio works and repeatedly prints it
           Serial.println("Cannot communicate with radio");
-          delay(100);
+          delay(1000);
         } // Wait here forever.
     }
 
@@ -168,6 +170,7 @@ void LEDactivation(int color){//Flashes LEDs/buzzer to show what state the boat 
       digitalWrite(LEDredPin, LOW);
 
       digitalWrite(LEDbuzzerPin, LOW);
+      Serial.print("0");
 
       break;
 
@@ -177,6 +180,7 @@ void LEDactivation(int color){//Flashes LEDs/buzzer to show what state the boat 
       digitalWrite(LEDredPin, LOW);
 
       digitalWrite(LEDbuzzerPin, LOW);
+      Serial.print("0");
 
       break;
 
@@ -186,6 +190,7 @@ void LEDactivation(int color){//Flashes LEDs/buzzer to show what state the boat 
       halfSecondOn(LEDredPin);
 
       halfSecondOn(LEDbuzzerPin);
+      Serial.print("1");
 
       break;
 
@@ -232,8 +237,12 @@ void loop() {
 
     }
   }
-
-  if(!radio.hasData() && !isKeyOn()){
-    deactivatePololu();
+  if(radio.hasData()){
+    //Serial.print("hasData");
   }
+  if(!radio.hasData()){
+    //deactivatePololu();
+    //Serial.println("no Data");
+  }
+  
 }
