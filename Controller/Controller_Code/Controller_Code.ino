@@ -9,8 +9,8 @@ const static uint8_t DESTINATION_RADIO_ID = 1;  // Id of the boat radio.
 
 struct RadioPacket  // Any packet up to 32 bytes can be sent.
 {
-  int8_t JoystickX;
-  int8_t JoystickY;
+  int8_t joystickX;
+  int8_t joystickY;
 
   int8_t thrust;
   int8_t twist;
@@ -49,10 +49,144 @@ RadioPacket radioData;
   int MIpin = 12;
   int SCKpin = 12;
 
+//LCD setup begin
 LCD_I2C lcd(0x27, 16, 2);
 
-String enabled = " ";
-String manual = " ";
+uint8_t negPoint2[8] =
+{
+    0b00001,
+    0b00001,
+    0b00001,
+    0b00001,
+    0b00001,
+    0b00001,
+    0b00001,
+    0b00001
+};
+uint8_t negPoint4[8] =
+{
+    0b00011,
+    0b00011,
+    0b00011,
+    0b00011,
+    0b00011,
+    0b00011,
+    0b00011,
+    0b00011
+};
+uint8_t negPoint6[8] =
+{
+    0b00111,
+    0b00111,
+    0b00111,
+    0b00111,
+    0b00111,
+    0b00111,
+    0b00111,
+    0b00111
+};
+uint8_t negPoint8[8] =
+{
+    0b01111,
+    0b01111,
+    0b01111,
+    0b01111,
+    0b01111,
+    0b01111,
+    0b01111,
+    0b01111
+};
+
+uint8_t posPoint2[8] =
+{
+    0b10000,
+    0b10000,
+    0b10000,
+    0b10000,
+    0b10000,
+    0b10000,
+    0b10000,
+    0b10000
+};
+uint8_t posPoint4[8] =
+{
+    0b11000,
+    0b11000,
+    0b11000,
+    0b11000,
+    0b11000,
+    0b11000,
+    0b11000,
+    0b11000
+};
+uint8_t posPoint6[8] =
+{
+    0b11100,
+    0b11100,
+    0b11100,
+    0b11100,
+    0b11100,
+    0b11100,
+    0b11100,
+    0b11100
+};
+uint8_t posPoint8[8] =
+{
+    0b11110,
+    0b11110,
+    0b11110,
+    0b11110,
+    0b11110,
+    0b11110,
+    0b11110,
+    0b11110
+};
+
+uint8_t fullSpot[8] =
+{
+    0b11111,
+    0b11111,
+    0b11111,
+    0b11111,
+    0b11111,
+    0b11111,
+    0b11111,
+    0b11111
+};
+uint8_t emptySpot[8] =
+{
+    0b11111,
+    0b10001,
+    0b10001,
+    0b10001,
+    0b10001,
+    0b10001,
+    0b10001,
+    0b11111
+};
+
+int p2 = 0;
+int p4 = 1;
+int p6 = 2;
+int p8 = 3;
+
+int np2 = 4;
+int np4 = 5;
+int np6 = 6;
+int np8 = 7;
+
+int full = 8;
+int emptyBox = 9;
+//LCD setup end
+
+String rightString = " ";
+String leftString = " ";
+
+double currentRightValue = 0;
+double currentLeftValue = 0;
+
+int rightBoxes = 0;
+int leftBoxes = 0;
 
 bool needToUpdateLCD = true;
 
@@ -79,25 +213,92 @@ void setup() {
 
   lcd.begin();
   lcd.backlight();
+
+  lcd.createChar(p2, posPoint2);
+  lcd.createChar(p4, posPoint4);
+  lcd.createChar(p6, posPoint6);
+  lcd.createChar(p8, posPoint8);
+
+  lcd.createChar(np2, negPoint2);
+  lcd.createChar(np4, negPoint4);
+  lcd.createChar(np6, negPoint6);
+  lcd.createChar(np8, negPoint8);
+
+  lcd.createChar(full, fullSpot);
 }
 
 //Updates the LCD and displaces the state of the robot
 void updateLCD(){
   if(needToUpdateLCD != 0){
     lcd.clear();
-    lcd.print(enabled);
+    lcd.print(rightString);
     lcd.setCursor(0,2);
-    lcd.print(manual);
+    lcd.print(leftString);
     lcd.setCursor(0,1);
     needToUpdateLCD = false;
   }
 }
 
+void fixer(){}
+
+void writeRightScreen(){
+  rightBoxes = radioData.joystickX * 35;
+  if(rightBoxes > 0){
+    lcd.setCursor(1,1);
+    lcd.print("       ");
+    lcd.write(emptyBox);
+    for(int i = rightBoxes / 5; i > 0; i--){
+      lcd.write(full);
+    }
+    switch(rightBoxes % 5)
+    {
+      case 1:
+        lcd.write(p2);
+        break;
+      case 2:
+        lcd.write(p4);
+        break;
+      case 3:
+        lcd.write(p6);
+        break;
+      case 4:
+        lcd.write(p8);
+        break;              
+    }
+  }
+  else{
+    for(int i = 7 - ((rightBoxes / 5) + 1); i > 0; i--){
+      lcd.print(" ");
+    }
+    switch(rightBoxes % 5)
+    {
+      case 1:
+        lcd.write(np2);
+        break;
+      case 2:
+        lcd.write(np4);
+        break;
+      case 3:
+        lcd.write(np6);
+        break;
+       case 4:
+        lcd.write(np8);
+        break;
+    }
+    for(int i = rightBoxes / 5; i > 0; i--){
+      lcd.write(full);
+    }
+    lcd.write(emptyBox);
+      
+  }
+}
+
+
 void loop() {
   // put your main code here, to run repeatedly:
 
-  radioData.JoystickX = analogRead(joystickXpin);//Reads and applies the joystick values to the data pack
-  radioData.JoystickY = analogRead(joystickYpin);//^
+  radioData.joystickX = analogRead(joystickXpin);//Reads and applies the joystick values to the data pack
+  radioData.joystickY = analogRead(joystickYpin);//^
   radioData.twist = analogRead(twist);           //^
   radioData.thrust = analogRead(thrust);         //^
 
@@ -105,29 +306,29 @@ void loop() {
   radioData.isAuton = digitalRead(autonSwitchPin);
 
   //checks if theres a change in the enabled state of the robot
-  if (radioData.keyEnabled && !enabled.equals("Enabled")){
+  if (radioData.joystickX != currentRightValue && !rightString.equals("Enabled")){
     needToUpdateLCD = true;
-    enabled = "Enabled";
+    rightString = "Enabled";
   }
-  else if (!radioData.keyEnabled && !enabled.equals("Disabled")){
+  else if (!radioData.keyEnabled && !rightString.equals("Disabled")){
     needToUpdateLCD = true;
-    enabled = "Disabled";
+    rightString = "Disabled";
   }
     
   //checks if theres a change in the manual/auton state of the robot
-  if (radioData.isAuton && !manual.equals("Auton")){
+  if (radioData.isAuton && !leftString.equals("Auton")){
     needToUpdateLCD = true;
-    manual = "Auton";
+    leftString = "Auton";
   }
-  else if (!radioData.isAuton && !manual.equals("Manual")){
+  else if (!radioData.isAuton && !leftString.equals("Manual")){
     needToUpdateLCD = true;
-    manual = "Manual";
+    leftString = "Manual";
   }
 
   updateLCD();
 
-  Serial.print(enabled);
-  Serial.println(manual);
+  Serial.print(rightString + " ");
+  Serial.println(leftString);
 
   radio.send(DESTINATION_RADIO_ID, &radioData, sizeof(radioData), NRFLite::NO_ACK);  // Note how '&' must be placed in front of the variable name. Sends data packs
   

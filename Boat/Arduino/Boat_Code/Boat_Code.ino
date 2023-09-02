@@ -116,7 +116,7 @@ bool isAutonomous(){
 
 void activatePololu(){
   Serial.println("enabled");
-  pololu.writeMicroseconds(2000);
+  pololu.writeMicroseconds(1750);
 }
 
 void deactivatePololu(){
@@ -147,10 +147,15 @@ void autonSteering(){//reads values from the Pi AI and sends it to the motors
 
 bool isKeyOn(){//checks if the boat is safe to enable
   if(radioData.keyEnabled == HIGH && radio.hasData()){
+    connectivityTimer = 0;
+    return true;
+  }
+  else if(radio.hasData() && radioData.keyEnabled == LOW){
+    connectivityTimer = 0;
     return true;
   }
   else{
-    if(connectivityTimer < 1000000){
+    if(connectivityTimer < 1300){
       connectivityTimer++;
       return true;
     }
@@ -170,7 +175,6 @@ void LEDactivation(int color){//Flashes LEDs/buzzer to show what state the boat 
       digitalWrite(LEDredPin, LOW);
 
       digitalWrite(LEDbuzzerPin, LOW);
-      Serial.print("0");
 
       break;
 
@@ -180,7 +184,6 @@ void LEDactivation(int color){//Flashes LEDs/buzzer to show what state the boat 
       digitalWrite(LEDredPin, LOW);
 
       digitalWrite(LEDbuzzerPin, LOW);
-      Serial.print("0");
 
       break;
 
@@ -190,7 +193,6 @@ void LEDactivation(int color){//Flashes LEDs/buzzer to show what state the boat 
       halfSecondOn(LEDredPin);
 
       halfSecondOn(LEDbuzzerPin);
-      Serial.print("1");
 
       break;
 
@@ -209,6 +211,11 @@ void halfSecondOn(int pin){
 
 void loop() {
   // put your main code here, to run repeatedly:
+
+  //Serial.print(radio.hasData());
+
+  if(isKeyOn()){
+    
   while (radio.hasData()){//SAFETY: Only runs code when radio is connected
 
     radio.readData(&radioData); // Note how '&' must be placed in front of the variable name.
@@ -236,13 +243,17 @@ void loop() {
       LEDactivation(0);
 
     }
+  }}
+  else{
+    //Serial.print("noData__");
+    deactivatePololu();
   }
-  if(radio.hasData()){
+  //if(radio.hasData()){
     //Serial.print("hasData");
-  }
-  if(!radio.hasData()){
-    //deactivatePololu();
+  //}
+ //if(!radio.hasData() /*&& isKeyOn()*/){
+   // deactivatePololu();
     //Serial.println("no Data");
-  }
+  //}
   
 }
