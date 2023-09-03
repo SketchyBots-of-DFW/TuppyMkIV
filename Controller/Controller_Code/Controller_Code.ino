@@ -231,15 +231,15 @@ void setup() {
 void updateLCD(){
   if(needToUpdateLCD != 0){
     lcd.clear();
-    lcd.print(rightString);
-    lcd.setCursor(0,2);
-    lcd.print(leftString);
-    lcd.setCursor(0,1);
+    writeRightScreen();
+    writeLeftScreen();
+    //lcd.print(rightString);
+    //lcd.setCursor(0,2);
+    //lcd.print(leftString);
+    //lcd.setCursor(0,1);
     needToUpdateLCD = false;
   }
 }
-
-void fixer(){}
 
 void writeRightScreen(){
   rightBoxes = radioData.joystickX * 35;
@@ -293,6 +293,57 @@ void writeRightScreen(){
   }
 }
 
+void writeLeftScreen(){
+  leftBoxes = radioData.thrust * 35;
+  if(leftBoxes > 0){
+    lcd.setCursor(2,1);
+    lcd.print("       ");
+    lcd.write(emptyBox);
+    for(int i = leftBoxes / 5; i > 0; i--){
+      lcd.write(full);
+    }
+    switch(leftBoxes % 5)
+    {
+      case 1:
+        lcd.write(p2);
+        break;
+      case 2:
+        lcd.write(p4);
+        break;
+      case 3:
+        lcd.write(p6);
+        break;
+      case 4:
+        lcd.write(p8);
+        break;              
+    }
+  }
+  else{
+    for(int i = 7 - ((leftBoxes / 5) + 1); i > 0; i--){
+      lcd.print(" ");
+    }
+    switch(leftBoxes % 5)
+    {
+      case 1:
+        lcd.write(np2);
+        break;
+      case 2:
+        lcd.write(np4);
+        break;
+      case 3:
+        lcd.write(np6);
+        break;
+       case 4:
+        lcd.write(np8);
+        break;
+    }
+    for(int i = leftBoxes / 5; i > 0; i--){
+      lcd.write(full);
+    }
+    lcd.write(emptyBox);
+      
+  }
+}
 
 void loop() {
   // put your main code here, to run repeatedly:
