@@ -235,6 +235,14 @@ void updateLCD(){
     lcd.clear();
     writeRightScreen();
     writeLeftScreen();
+<<<<<<< HEAD
+=======
+    //lcd.print(rightString);
+    //lcd.setCursor(0,2);
+    //lcd.print(leftString);
+    //lcd.setCursor(0,1);
+    needToUpdateLCD = false;
+>>>>>>> 443aa4d49c1b458d1b2f553fc0fb311daff333dd
   }
 }
 
@@ -296,10 +304,16 @@ void writeRightScreen(){
 }
 
 void writeLeftScreen(){
+<<<<<<< HEAD
   leftBoxes = (radioData.joystickY*35 / 255);
   lcd.setCursor(0,1);
   lcd.print("L");
   if(leftBoxes > 0){  
+=======
+  leftBoxes = radioData.thrust * 35;
+  if(leftBoxes > 0){
+    lcd.setCursor(2,1);
+>>>>>>> 443aa4d49c1b458d1b2f553fc0fb311daff333dd
     lcd.print("       ");
     lcd.write(emptyBox);
     for(int i = leftBoxes / 5; i > 0; i--){
@@ -311,22 +325,36 @@ void writeLeftScreen(){
         lcd.write(p2);
         break;
       case 2:
+<<<<<<< HEAD
         lcd.write(p2);
+=======
+        lcd.write(p4);
+>>>>>>> 443aa4d49c1b458d1b2f553fc0fb311daff333dd
         break;
       case 3:
         lcd.write(p6);
         break;
       case 4:
+<<<<<<< HEAD
         lcd.write(p6);
         break;              
     }
   }
   else if(leftBoxes < 0){
     for(int i = 6 - abs(leftBoxes / 5); i > 0; i--){
+=======
+        lcd.write(p8);
+        break;              
+    }
+  }
+  else{
+    for(int i = 7 - ((leftBoxes / 5) + 1); i > 0; i--){
+>>>>>>> 443aa4d49c1b458d1b2f553fc0fb311daff333dd
       lcd.print(" ");
     }
     switch(leftBoxes % 5)
     {
+<<<<<<< HEAD
       case -1:
         lcd.write(np2);
         break;
@@ -341,15 +369,34 @@ void writeLeftScreen(){
         break;
     }
     for(int i = leftBoxes / 5; i < 0; i++){
+=======
+      case 1:
+        lcd.write(np2);
+        break;
+      case 2:
+        lcd.write(np4);
+        break;
+      case 3:
+        lcd.write(np6);
+        break;
+       case 4:
+        lcd.write(np8);
+        break;
+    }
+    for(int i = leftBoxes / 5; i > 0; i--){
+>>>>>>> 443aa4d49c1b458d1b2f553fc0fb311daff333dd
       lcd.write(full);
     }
     lcd.write(emptyBox);
       
   }
+<<<<<<< HEAD
   else{
     lcd.print("       ");
     lcd.write(emptyBox);
   }
+=======
+>>>>>>> 443aa4d49c1b458d1b2f553fc0fb311daff333dd
 }
 
 void loop() {
