@@ -47,7 +47,7 @@ RadioPacket radioData;
   uint8_t CSNpin = 10;
   int MOpin = 11;
   int MIpin = 12;
-  int SCKpin = 12;
+  int SCKpin = 13;
 
 //LCD setup begin
 LCD_I2C lcd(0x27, 16, 2);
@@ -165,25 +165,25 @@ uint8_t emptySpot[8] =
     0b11111
 };
 
-int p2 = 0;
-int p4 = 1;
-int p6 = 2;
-int p8 = 3;
+uint8_t p2 = 0;
+uint8_t p4 = 1;
+uint8_t p6 = 2;
+uint8_t p8 = 3;
 
-int np2 = 4;
-int np4 = 5;
-int np6 = 6;
-int np8 = 7;
+uint8_t np2 = 4;
+uint8_t np4 = 5;
+uint8_t np6 = 6;
+uint8_t np8 = 7;
 
-int full = 8;
-int emptyBox = 9;
+uint8_t full = 8;
+uint8_t emptyBox = 9;
 //LCD setup end
 
 String rightString = " ";
 String leftString = " ";
 
-double currentRightValue = 0;
-double currentLeftValue = 0;
+double currentRightValue = .5;
+double currentLeftValue = .5;
 
 int rightBoxes = 0;
 int leftBoxes = 0;
@@ -207,7 +207,7 @@ void setup() {
 
   if (!radio.init(RADIO_ID, CEpin, CSNpin)) {
     Serial.println("Cannot communicate with radio");
-    while (1)
+    //while (1)
       ;  // Wait here forever.
   }
 
@@ -215,36 +215,34 @@ void setup() {
   lcd.backlight();
 
   lcd.createChar(p2, posPoint2);
-  lcd.createChar(p4, posPoint4);
+  //lcd.createChar(p4, posPoint4);
   lcd.createChar(p6, posPoint6);
-  lcd.createChar(p8, posPoint8);
+  //lcd.createChar(p8, posPoint8);
 
   lcd.createChar(np2, negPoint2);
-  lcd.createChar(np4, negPoint4);
+  //lcd.createChar(np4, negPoint4);
   lcd.createChar(np6, negPoint6);
-  lcd.createChar(np8, negPoint8);
+  //lcd.createChar(np8, negPoint8);
 
   lcd.createChar(full, fullSpot);
+  lcd.createChar(emptyBox, emptySpot);
+
 }
 
 //Updates the LCD and displaces the state of the robot
 void updateLCD(){
-  if(needToUpdateLCD != 0){
+  if(millis() % 1 == 0){
     lcd.clear();
-    lcd.print(rightString);
-    lcd.setCursor(0,2);
-    lcd.print(leftString);
-    lcd.setCursor(0,1);
-    needToUpdateLCD = false;
+    writeRightScreen();
+    writeLeftScreen();
   }
 }
 
-void fixer(){}
-
 void writeRightScreen(){
-  rightBoxes = radioData.joystickX * 35;
-  if(rightBoxes > 0){
-    lcd.setCursor(1,1);
+  rightBoxes = (radioData.joystickX*35 / 255);
+  lcd.setCursor(0,0);
+  lcd.print("R");
+  if(rightBoxes > 0){  
     lcd.print("       ");
     lcd.write(emptyBox);
     for(int i = rightBoxes / 5; i > 0; i--){
@@ -256,43 +254,103 @@ void writeRightScreen(){
         lcd.write(p2);
         break;
       case 2:
-        lcd.write(p4);
+        lcd.write(p2);
         break;
       case 3:
         lcd.write(p6);
         break;
       case 4:
-        lcd.write(p8);
+        lcd.write(p6);
         break;              
     }
   }
-  else{
-    for(int i = 7 - ((rightBoxes / 5) + 1); i > 0; i--){
+  else if(rightBoxes < 0){
+    for(int i = 6 - abs(rightBoxes / 5); i > 0; i--){
       lcd.print(" ");
     }
     switch(rightBoxes % 5)
     {
-      case 1:
+      case -1:
         lcd.write(np2);
         break;
-      case 2:
-        lcd.write(np4);
+      case -2:
+        lcd.write(np2);
         break;
-      case 3:
+      case -3:
         lcd.write(np6);
         break;
-       case 4:
-        lcd.write(np8);
+       case -4:
+        lcd.write(np6);
         break;
     }
-    for(int i = rightBoxes / 5; i > 0; i--){
+    for(int i = rightBoxes / 5; i < 0; i++){
       lcd.write(full);
     }
     lcd.write(emptyBox);
       
   }
+  else{
+    lcd.print("       ");
+    lcd.write(emptyBox);
+  }
 }
 
+void writeLeftScreen(){
+  leftBoxes = (radioData.joystickY*35 / 255);
+  lcd.setCursor(0,1);
+  lcd.print("L");
+  if(leftBoxes > 0){  
+    lcd.print("       ");
+    lcd.write(emptyBox);
+    for(int i = leftBoxes / 5; i > 0; i--){
+      lcd.write(full);
+    }
+    switch(leftBoxes % 5)
+    {
+      case 1:
+        lcd.write(p2);
+        break;
+      case 2:
+        lcd.write(p2);
+        break;
+      case 3:
+        lcd.write(p6);
+        break;
+      case 4:
+        lcd.write(p6);
+        break;              
+    }
+  }
+  else if(leftBoxes < 0){
+    for(int i = 6 - abs(leftBoxes / 5); i > 0; i--){
+      lcd.print(" ");
+    }
+    switch(leftBoxes % 5)
+    {
+      case -1:
+        lcd.write(np2);
+        break;
+      case -2:
+        lcd.write(np2);
+        break;
+      case -3:
+        lcd.write(np6);
+        break;
+       case -4:
+        lcd.write(np6);
+        break;
+    }
+    for(int i = leftBoxes / 5; i < 0; i++){
+      lcd.write(full);
+    }
+    lcd.write(emptyBox);
+      
+  }
+  else{
+    lcd.print("       ");
+    lcd.write(emptyBox);
+  }
+}
 
 void loop() {
   // put your main code here, to run repeatedly:
@@ -304,31 +362,16 @@ void loop() {
 
   radioData.keyEnabled = !digitalRead(keyPin);//Reads and applies the key and switch values to the data pack
   radioData.isAuton = digitalRead(autonSwitchPin);
-
-  //checks if theres a change in the enabled state of the robot
-  if (radioData.joystickX != currentRightValue && !rightString.equals("Enabled")){
-    needToUpdateLCD = true;
-    rightString = "Enabled";
-  }
-  else if (!radioData.keyEnabled && !rightString.equals("Disabled")){
-    needToUpdateLCD = true;
-    rightString = "Disabled";
-  }
-    
-  //checks if theres a change in the manual/auton state of the robot
-  if (radioData.isAuton && !leftString.equals("Auton")){
-    needToUpdateLCD = true;
-    leftString = "Auton";
-  }
-  else if (!radioData.isAuton && !leftString.equals("Manual")){
-    needToUpdateLCD = true;
-    leftString = "Manual";
-  }
-
+  
   updateLCD();
 
-  Serial.print(rightString + " ");
-  Serial.println(leftString);
+  Serial.print(leftBoxes);
+  Serial.print(" ");
+  Serial.print(radioData.joystickY);
+  Serial.print("   ");
+  Serial.print(rightBoxes);
+  Serial.print(" ");
+  Serial.println(radioData.joystickX);
 
   radio.send(DESTINATION_RADIO_ID, &radioData, sizeof(radioData), NRFLite::NO_ACK);  // Note how '&' must be placed in front of the variable name. Sends data packs
   
