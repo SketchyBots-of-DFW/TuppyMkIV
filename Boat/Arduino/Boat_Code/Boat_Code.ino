@@ -152,10 +152,10 @@ bool isKeyOn(){//checks if the boat is safe to enable
   }
   else if(radio.hasData() && radioData.keyEnabled == LOW){
     connectivityTimer = 0;
-    return true;
+    
   }
   else{
-    if(connectivityTimer < 1300){
+    if(connectivityTimer < 1300 && radioData.keyEnabled == HIGH){
       connectivityTimer++;
       return true;
     }
@@ -211,8 +211,6 @@ void halfSecondOn(int pin){
 
 void loop() {
   // put your main code here, to run repeatedly:
-
-  //Serial.print(radio.hasData());
 
   if(isKeyOn()){
     

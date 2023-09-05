@@ -1,27 +1,7 @@
 #include "SPI.h"
 #include "NRFLite.h"
 #include <LCD_I2C.h>
-
-//Radio Setup Begin
-const static uint8_t RADIO_ID = 0;              // Controller radio's id.
-const static uint8_t DESTINATION_RADIO_ID = 1;  // Id of the boat radio.
-
-
-struct RadioPacket  // Any packet up to 32 bytes can be sent.
-{
-  int8_t joystickX;
-  int8_t joystickY;
-
-  int8_t thrust;
-  int8_t twist;
-
-  bool keyEnabled;
-  bool isAuton;
-};
-
-NRFLite radio;
-RadioPacket radioData;
-//Radio Setup End
+#include <BetterJoystick.h>
 
 //Pins
   //Analog
@@ -48,6 +28,27 @@ RadioPacket radioData;
   int MOpin = 11;
   int MIpin = 12;
   int SCKpin = 13;
+
+//Radio Setup Begin
+const static uint8_t RADIO_ID = 0;              // Controller radio's id.
+const static uint8_t DESTINATION_RADIO_ID = 1;  // Id of the boat radio.
+
+
+struct RadioPacket  // Any packet up to 32 bytes can be sent.
+{
+  int8_t joystickX;
+  int8_t joystickY;
+
+  int8_t thrust;
+  int8_t twist;
+
+  bool keyEnabled;
+  bool isAuton;
+};
+
+NRFLite radio;
+RadioPacket radioData;
+//Radio setup end
 
 //LCD setup begin
 LCD_I2C lcd(0x27, 16, 2);
@@ -179,16 +180,8 @@ uint8_t full = 8;
 uint8_t emptyBox = 9;
 //LCD setup end
 
-String rightString = " ";
-String leftString = " ";
-
-double currentRightValue = .5;
-double currentLeftValue = .5;
-
-int rightBoxes = 0;
-int leftBoxes = 0;
-
-bool needToUpdateLCD = true;
+Joystick leftJoystick(joystickXpin, joystickYpin, 4);
+Joystick rightJoystick(twist, thrust, 5);
 
 void setup() {
   // put your setup code here, to run once:
@@ -197,15 +190,7 @@ void setup() {
   pinMode(keyPin, INPUT_PULLUP);
   pinMode(autonSwitchPin, INPUT_PULLUP);
 
-  // By default, 'init' configures the radio to use a 2MBPS bitrate on channel 100 (channels 0-125 are valid).
-  // Both the RX and TX radios must have the same bitrate and channel to communicate with each other.
-  // You can run the 'ChannelScanner' example to help select the best channel for your environment.
-  // You can assign a different bitrate and channel as shown below.
-  //   _radio.init(RADIO_ID, PIN_RADIO_CE, PIN_RADIO_CSN, NRFLite::BITRATE2MBPS, 100) // THE DEFAULT
-  //   _radio.init(RADIO_ID, PIN_RADIO_CE, PIN_RADIO_CSN, NRFLite::BITRATE1MBPS, 75)
-  //   _radio.init(RADIO_ID, PIN_RADIO_CE, PIN_RADIO_CSN, NRFLite::BITRATE250KBPS, 0)
-
-  if (!radio.init(RADIO_ID, CEpin, CSNpin)) {
+  if (!radio.init(RADIO_ID, CEpin, CSNpin, NRFLite::BITRATE2MBPS, 100)) {
     Serial.println("Cannot communicate with radio");
     //while (1)
       ;  // Wait here forever.
@@ -215,14 +200,14 @@ void setup() {
   lcd.backlight();
 
   lcd.createChar(p2, posPoint2);
-  //lcd.createChar(p4, posPoint4);
+  lcd.createChar(p4, posPoint4);
   lcd.createChar(p6, posPoint6);
-  //lcd.createChar(p8, posPoint8);
+  lcd.createChar(p8, posPoint8);
 
   lcd.createChar(np2, negPoint2);
-  //lcd.createChar(np4, negPoint4);
+  lcd.createChar(np4, negPoint4);
   lcd.createChar(np6, negPoint6);
-  //lcd.createChar(np8, negPoint8);
+  lcd.createChar(np8, negPoint8);
 
   lcd.createChar(full, fullSpot);
   lcd.createChar(emptyBox, emptySpot);
@@ -231,194 +216,89 @@ void setup() {
 
 //Updates the LCD and displaces the state of the robot
 void updateLCD(){
-  if(millis() % 1 == 0){
+  if(millis() % 10 == 0){
     lcd.clear();
-    writeRightScreen();
-    writeLeftScreen();
-<<<<<<< HEAD
-=======
-    //lcd.print(rightString);
-    //lcd.setCursor(0,2);
-    //lcd.print(leftString);
-    //lcd.setCursor(0,1);
-    needToUpdateLCD = false;
->>>>>>> 443aa4d49c1b458d1b2f553fc0fb311daff333dd
+    writeScreen(radioData.joystickY, 0);
+    writeScreen(radioData.thrust, 1);
   }
 }
 
-void writeRightScreen(){
-  rightBoxes = (radioData.joystickX*35 / 255);
-  lcd.setCursor(0,0);
-  lcd.print("R");
-  if(rightBoxes > 0){  
-    lcd.print("       ");
-    lcd.write(emptyBox);
-    for(int i = rightBoxes / 5; i > 0; i--){
-      lcd.write(full);
-    }
-    switch(rightBoxes % 5)
-    {
-      case 1:
-        lcd.write(p2);
-        break;
-      case 2:
-        lcd.write(p2);
-        break;
-      case 3:
-        lcd.write(p6);
-        break;
-      case 4:
-        lcd.write(p6);
-        break;              
-    }
-  }
-  else if(rightBoxes < 0){
-    for(int i = 6 - abs(rightBoxes / 5); i > 0; i--){
-      lcd.print(" ");
-    }
-    switch(rightBoxes % 5)
-    {
-      case -1:
-        lcd.write(np2);
-        break;
-      case -2:
-        lcd.write(np2);
-        break;
-      case -3:
-        lcd.write(np6);
-        break;
-       case -4:
-        lcd.write(np6);
-        break;
-    }
-    for(int i = rightBoxes / 5; i < 0; i++){
-      lcd.write(full);
-    }
-    lcd.write(emptyBox);
-      
+void writeScreen(int joystickVal, int row){
+  int boxes = (joystickVal / 255.0) * 35;
+  int pos;
+
+  lcd.setCursor(8,row);
+  lcd.write(emptyBox);
+  lcd.setCursor(0,row);
+
+  if(row == 0){
+    lcd.print("R");
   }
   else{
-    lcd.print("       ");
-    lcd.write(emptyBox);
+    lcd.print("L");
   }
-}
 
-void writeLeftScreen(){
-<<<<<<< HEAD
-  leftBoxes = (radioData.joystickY*35 / 255);
-  lcd.setCursor(0,1);
-  lcd.print("L");
-  if(leftBoxes > 0){  
-=======
-  leftBoxes = radioData.thrust * 35;
-  if(leftBoxes > 0){
-    lcd.setCursor(2,1);
->>>>>>> 443aa4d49c1b458d1b2f553fc0fb311daff333dd
-    lcd.print("       ");
-    lcd.write(emptyBox);
-    for(int i = leftBoxes / 5; i > 0; i--){
+  if(boxes > 0){  
+    lcd.setCursor(9,row);
+    for(int i = boxes / 5; i > 0; i--){
       lcd.write(full);
     }
-    switch(leftBoxes % 5)
-    {
+    switch(boxes % 5){
       case 1:
         lcd.write(p2);
         break;
       case 2:
-<<<<<<< HEAD
-        lcd.write(p2);
-=======
+        //lcd.write(p2);
         lcd.write(p4);
->>>>>>> 443aa4d49c1b458d1b2f553fc0fb311daff333dd
         break;
       case 3:
         lcd.write(p6);
         break;
       case 4:
-<<<<<<< HEAD
-        lcd.write(p6);
-        break;              
-    }
-  }
-  else if(leftBoxes < 0){
-    for(int i = 6 - abs(leftBoxes / 5); i > 0; i--){
-=======
+        //lcd.write(p6);
         lcd.write(p8);
         break;              
     }
   }
-  else{
-    for(int i = 7 - ((leftBoxes / 5) + 1); i > 0; i--){
->>>>>>> 443aa4d49c1b458d1b2f553fc0fb311daff333dd
-      lcd.print(" ");
+  else if(boxes < 0){
+    pos = 7;
+    for(int i = boxes / 5; i < 0; i++){
+      lcd.setCursor(pos,row);
+      lcd.write(full);
+      pos--;
     }
-    switch(leftBoxes % 5)
-    {
-<<<<<<< HEAD
+    lcd.setCursor(pos,row);
+    switch(boxes % 5){
       case -1:
         lcd.write(np2);
         break;
       case -2:
-        lcd.write(np2);
+        //lcd.write(np2);
+        lcd.write(np4);
         break;
       case -3:
         lcd.write(np6);
         break;
        case -4:
-        lcd.write(np6);
-        break;
-    }
-    for(int i = leftBoxes / 5; i < 0; i++){
-=======
-      case 1:
-        lcd.write(np2);
-        break;
-      case 2:
-        lcd.write(np4);
-        break;
-      case 3:
-        lcd.write(np6);
-        break;
-       case 4:
+        //lcd.write(np6);
         lcd.write(np8);
         break;
-    }
-    for(int i = leftBoxes / 5; i > 0; i--){
->>>>>>> 443aa4d49c1b458d1b2f553fc0fb311daff333dd
-      lcd.write(full);
-    }
-    lcd.write(emptyBox);
-      
+    } 
   }
-<<<<<<< HEAD
-  else{
-    lcd.print("       ");
-    lcd.write(emptyBox);
-  }
-=======
->>>>>>> 443aa4d49c1b458d1b2f553fc0fb311daff333dd
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
 
-  radioData.joystickX = analogRead(joystickXpin);//Reads and applies the joystick values to the data pack
-  radioData.joystickY = analogRead(joystickYpin);//^
-  radioData.twist = analogRead(twist);           //^
-  radioData.thrust = analogRead(thrust);         //^
+  radioData.joystickX = rightJoystick.x(-255,255);//RIGHT Reads and applies the joystick values to the data pack
+  radioData.joystickY = rightJoystick.y(-255,255);//RIGHT ^
+  radioData.twist = leftJoystick.x(-255,255);     //LEFT  ^
+  radioData.thrust = leftJoystick.y(-255,255);    //LEFT  ^
 
-  radioData.keyEnabled = !digitalRead(keyPin);//Reads and applies the key and switch values to the data pack
-  radioData.isAuton = digitalRead(autonSwitchPin);
+  radioData.keyEnabled = !digitalRead(keyPin);    //Reads and applies the key value to the data pack
+  radioData.isAuton = digitalRead(autonSwitchPin);//^ for the switch
   
   updateLCD();
-
-  Serial.print(leftBoxes);
-  Serial.print(" ");
-  Serial.print(radioData.joystickY);
-  Serial.print("   ");
-  Serial.print(rightBoxes);
-  Serial.print(" ");
-  Serial.println(radioData.joystickX);
 
   radio.send(DESTINATION_RADIO_ID, &radioData, sizeof(radioData), NRFLite::NO_ACK);  // Note how '&' must be placed in front of the variable name. Sends data packs
   
