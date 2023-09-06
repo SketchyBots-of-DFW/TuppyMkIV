@@ -200,31 +200,31 @@ void setup() {
   lcd.backlight();
 
   lcd.createChar(p2, posPoint2);
-  lcd.createChar(p4, posPoint4);
+  //lcd.createChar(p4, posPoint4);
   lcd.createChar(p6, posPoint6);
-  lcd.createChar(p8, posPoint8);
+  //lcd.createChar(p8, posPoint8);
 
   lcd.createChar(np2, negPoint2);
-  lcd.createChar(np4, negPoint4);
+  //lcd.createChar(np4, negPoint4);
   lcd.createChar(np6, negPoint6);
-  lcd.createChar(np8, negPoint8);
+  //lcd.createChar(np8, negPoint8);
 
   lcd.createChar(full, fullSpot);
   lcd.createChar(emptyBox, emptySpot);
 
 }
 
-//Updates the LCD and displaces the state of the robot
+//Updates the LCD and displays the joystick values
 void updateLCD(){
-  if(millis() % 10 == 0){
+  if(millis() % 2 == 0){
     lcd.clear();
     writeScreen(radioData.joystickY, 0);
-    writeScreen(radioData.thrust, 1);
+    writeScreen(radioData.thrust, 1); 
   }
 }
 
 void writeScreen(int joystickVal, int row){
-  int boxes = (joystickVal / 255.0) * 35;
+  int boxes = ((joystickVal) / 128.0) * 35;
   int pos;
 
   lcd.setCursor(8,row);
@@ -248,15 +248,15 @@ void writeScreen(int joystickVal, int row){
         lcd.write(p2);
         break;
       case 2:
-        //lcd.write(p2);
-        lcd.write(p4);
+        lcd.write(p2);
+        //lcd.write(p4);
         break;
       case 3:
         lcd.write(p6);
         break;
       case 4:
-        //lcd.write(p6);
-        lcd.write(p8);
+        lcd.write(p6);
+        //lcd.write(p8);
         break;              
     }
   }
@@ -273,15 +273,15 @@ void writeScreen(int joystickVal, int row){
         lcd.write(np2);
         break;
       case -2:
-        //lcd.write(np2);
-        lcd.write(np4);
+        lcd.write(np2);
+        //lcd.write(np4);
         break;
       case -3:
         lcd.write(np6);
         break;
        case -4:
-        //lcd.write(np6);
-        lcd.write(np8);
+        lcd.write(np6);
+        //lcd.write(np8);
         break;
     } 
   }
@@ -290,16 +290,16 @@ void writeScreen(int joystickVal, int row){
 void loop() {
   // put your main code here, to run repeatedly:
 
-  radioData.joystickX = rightJoystick.x(-255,255);//RIGHT Reads and applies the joystick values to the data pack
-  radioData.joystickY = rightJoystick.y(-255,255);//RIGHT ^
-  radioData.twist = leftJoystick.x(-255,255);     //LEFT  ^
-  radioData.thrust = leftJoystick.y(-255,255);    //LEFT  ^
+  radioData.joystickX = rightJoystick.x(0,255) - 128;//RIGHT Reads and applies the joystick values to the data pack
+  radioData.joystickY = rightJoystick.y(0,255) - 128;//RIGHT ^
+  radioData.twist = leftJoystick.x(0,255) - 128;     //LEFT  ^
+  radioData.thrust = leftJoystick.y(0,255) - 128;    //LEFT  ^
 
   radioData.keyEnabled = !digitalRead(keyPin);    //Reads and applies the key value to the data pack
   radioData.isAuton = digitalRead(autonSwitchPin);//^ for the switch
-  
-  updateLCD();
 
+  updateLCD();
+  
   radio.send(DESTINATION_RADIO_ID, &radioData, sizeof(radioData), NRFLite::NO_ACK);  // Note how '&' must be placed in front of the variable name. Sends data packs
   
 }
