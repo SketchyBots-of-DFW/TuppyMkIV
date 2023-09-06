@@ -12,15 +12,15 @@
       int thrust = A3;
 
     //Out
-      int lcdSDA = A4;
-      int lcdSCL = A5;
-
+      
   //Digital
     //In
       int keyPin = 2;
       int autonSwitchPin = 3;
 
     //Out
+      int lcdSDA = A4;
+      int lcdSCL = A5;
 
 //Transmitter
   uint8_t CEpin = 9;
@@ -32,7 +32,6 @@
 //Radio Setup Begin
 const static uint8_t RADIO_ID = 0;              // Controller radio's id.
 const static uint8_t DESTINATION_RADIO_ID = 1;  // Id of the boat radio.
-
 
 struct RadioPacket  // Any packet up to 32 bytes can be sent.
 {
@@ -64,17 +63,6 @@ uint8_t negPoint2[8] =
     0b00001,
     0b00001
 };
-uint8_t negPoint4[8] =
-{
-    0b00011,
-    0b00011,
-    0b00011,
-    0b00011,
-    0b00011,
-    0b00011,
-    0b00011,
-    0b00011
-};
 uint8_t negPoint6[8] =
 {
     0b00111,
@@ -85,17 +73,6 @@ uint8_t negPoint6[8] =
     0b00111,
     0b00111,
     0b00111
-};
-uint8_t negPoint8[8] =
-{
-    0b01111,
-    0b01111,
-    0b01111,
-    0b01111,
-    0b01111,
-    0b01111,
-    0b01111,
-    0b01111
 };
 
 uint8_t posPoint2[8] =
@@ -109,17 +86,6 @@ uint8_t posPoint2[8] =
     0b10000,
     0b10000
 };
-uint8_t posPoint4[8] =
-{
-    0b11000,
-    0b11000,
-    0b11000,
-    0b11000,
-    0b11000,
-    0b11000,
-    0b11000,
-    0b11000
-};
 uint8_t posPoint6[8] =
 {
     0b11100,
@@ -130,17 +96,6 @@ uint8_t posPoint6[8] =
     0b11100,
     0b11100,
     0b11100
-};
-uint8_t posPoint8[8] =
-{
-    0b11110,
-    0b11110,
-    0b11110,
-    0b11110,
-    0b11110,
-    0b11110,
-    0b11110,
-    0b11110
 };
 
 uint8_t fullSpot[8] =
@@ -167,14 +122,10 @@ uint8_t emptySpot[8] =
 };
 
 uint8_t p2 = 0;
-uint8_t p4 = 1;
 uint8_t p6 = 2;
-uint8_t p8 = 3;
 
 uint8_t np2 = 4;
-uint8_t np4 = 5;
 uint8_t np6 = 6;
-uint8_t np8 = 7;
 
 uint8_t full = 8;
 uint8_t emptyBox = 9;
@@ -192,7 +143,7 @@ void setup() {
 
   if (!radio.init(RADIO_ID, CEpin, CSNpin, NRFLite::BITRATE2MBPS, 100)) {
     Serial.println("Cannot communicate with radio");
-    //while (1)
+    while (1)
       ;  // Wait here forever.
   }
 
@@ -200,14 +151,10 @@ void setup() {
   lcd.backlight();
 
   lcd.createChar(p2, posPoint2);
-  //lcd.createChar(p4, posPoint4);
   lcd.createChar(p6, posPoint6);
-  //lcd.createChar(p8, posPoint8);
 
   lcd.createChar(np2, negPoint2);
-  //lcd.createChar(np4, negPoint4);
   lcd.createChar(np6, negPoint6);
-  //lcd.createChar(np8, negPoint8);
 
   lcd.createChar(full, fullSpot);
   lcd.createChar(emptyBox, emptySpot);
@@ -249,14 +196,12 @@ void writeScreen(int joystickVal, int row){
         break;
       case 2:
         lcd.write(p2);
-        //lcd.write(p4);
         break;
       case 3:
         lcd.write(p6);
         break;
       case 4:
         lcd.write(p6);
-        //lcd.write(p8);
         break;              
     }
   }
@@ -274,14 +219,12 @@ void writeScreen(int joystickVal, int row){
         break;
       case -2:
         lcd.write(np2);
-        //lcd.write(np4);
         break;
       case -3:
         lcd.write(np6);
         break;
        case -4:
         lcd.write(np6);
-        //lcd.write(np8);
         break;
     } 
   }
