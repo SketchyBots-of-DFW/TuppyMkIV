@@ -163,7 +163,7 @@ void setup() {
 
 //Updates the LCD and displays the joystick values
 void updateLCD(){
-  if(millis() % 2 == 0){
+  if(millis() % 3 == 0){
     lcd.clear();
     writeScreen(radioData.joystickY, 0);
     writeScreen(radioData.thrust, 1); 
